@@ -88,8 +88,12 @@ while True:
 
     # Identifying the pointer by making its mask
     Mask = cv2.inRange(hsv, Lower_hsv, Upper_hsv)
+    #can be do better by incresing no of iterations
     Mask = cv2.erode(Mask, kernel, iterations=1)
+    # another name of erosion by using it -----> morph open
+    # as well as close is a name of dialation of a image
     Mask = cv2.morphologyEx(Mask, cv2.MORPH_OPEN, kernel)
+    #can be do better by incresing no of iterations
     Mask = cv2.dilate(Mask, kernel, iterations=1)
 
     # Find contours for the pointer after idetifying it
@@ -102,6 +106,7 @@ while True:
     	# sorting the contours to find biggest 
         cnt = sorted(cnts, key = cv2.contourArea, reverse = True)[0]
         # Get the radius of the enclosing circle around the found contour
+        # will be sorted area wise 
         ((x, y), radius) = cv2.minEnclosingCircle(cnt)
         # Draw the circle around the contour
         cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
