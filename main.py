@@ -1,0 +1,321 @@
+import cv2
+import numpy as np
+import time
+import os
+import HandTrackingModule as htm
+from datetime import datetime
+from tkinter import * 
+
+
+
+
+def virtual_Painter():
+    # brush thickness logic
+    root = Tk()  
+    root.geometry("400x300") 
+    v1 = DoubleVar()
+    def show1():
+        sel = "brush thickness is : = " + str(v1.get())
+        l1.config(text = sel, font =("Courier", 14)) 
+    s1 = Scale( root, variable = v1, from_ = 1, to = 10, orient = HORIZONTAL)   
+  
+    l3 = Label(root, text = "Brush thickness")
+    
+    b1 = Button(root, text ="brush thickness is:", command = show1, bg = "yellow")  
+    
+    l1 = Label(root)
+    
+    
+    s1.pack(anchor = CENTER) 
+    l3.pack()
+    b1.pack(anchor = CENTER)
+    l1.pack() 
+    root.mainloop()
+    
+
+
+    # print("started")
+    brushThickness = 5
+    eraserThickness = 150
+    brushThickness=int(v1.get())
+    print(brushThickness)
+    folderPath = "Header"
+    folderPath2="Header2"
+    myList = os.listdir(folderPath)
+    # print(myList)
+    overlayList = []
+    filled=[]
+    drawFilled=False
+    for imPath in myList:
+        image = cv2.imread(f'{folderPath}/{imPath}')
+        image=cv2.resize(image,(640,83),interpolation=cv2.INTER_AREA)
+        overlayList.append(image)
+    myList2=os.listdir(folderPath2)
+    overlayList2=[]
+    for imPath in myList2:
+        image = cv2.imread(f'{folderPath2}/{imPath}')
+        image=cv2.resize(image,(40,397),interpolation=cv2.INTER_AREA)
+        overlayList2.append(image)
+    
+    # print(len(overlayList))
+    # print(overlayList)
+    
+    header = overlayList[0]
+    header2=overlayList2[0]
+    drawColor = (255, 0, 255)
+    shape = 'freestyle'
+    cap = cv2.VideoCapture(0)
+    cap.set(3, 640)
+    cap.set(4, 480)
+
+    detector = htm.handDetector(detectionCon=0.85, maxHands=1)
+    xp, yp = 0, 0
+    imgCanvas = np.zeros((480, 640, 3), np.uint8)
+
+    i=0
+
+
+    # for a time management
+    cTime=0
+    pTime=datetime.now()
+    while True:
+        
+        cTime=datetime.now()
+        # 1. Import image
+        success, img = cap.read()
+        img = cv2.flip(img, 1)
+
+        # 2. Find Hand Landmarks
+        img = detector.findHands(img)
+        lmList = detector.findPosition(img, draw=False)
+
+        if len(lmList) != 0:
+            # print(lmList)
+
+            # tip of index and middle fingers
+            x1, y1 = lmList[8][1:]
+            x2, y2 = lmList[12][1:]
+            x0, y0 = lmList[4][1:]
+            # 3. Check which fingers are up
+            fingers = detector.fingersUp()
+            # print(fingers)
+
+            # 4. If Selection Mode - Two finger are up
+            if fingers[1] and fingers[2]:
+                xp, yp = 0, 0
+                # print("Selection Mode")
+                # # Checking for the click
+                if y1 < 83:
+                    if 125 < x1 < 225:
+                        header = overlayList[0]
+                        drawColor = (255, 0, 255)
+                    elif 275 < x1 < 275:
+                        header = overlayList[1]
+                        drawColor = (255, 0, 0)
+                    elif 400 < x1 < 475:
+                        header = overlayList[10]
+                        drawColor = (0, 255, 0)
+                    elif 525 < x1 < 640:
+                        header = overlayList[5]
+                        drawColor = (0, 0, 0)
+                if x1<40:
+                    # cv2.putText(img,str(x1)+","+str(y1),(x1,y1),cv2.FONT_HERSHEY_COMPLEX,3,(244,123,245))
+                    
+                    if y1>220:
+                        if (cTime-pTime).total_seconds()>0.75:
+                            if drawFilled:
+                                header2=overlayList2[1]
+                                drawFilled=False
+                            else:
+                                header2=overlayList2[0]
+                                drawFilled=True
+                            pTime=cTime
+                    else:
+                        # print(i)
+                        print((cTime-pTime).total_seconds())
+                        if (cTime-pTime).total_seconds()>1:
+                            cv2.imwrite("F:/project/saved/"+str(i)+".jpg",imgInv)
+                            i+=1
+                            pTime=cTime
+
+                        
+                if y1 > 80 and y1 < 140 :
+                    if x1 < 125:
+                        header = overlayList[9]
+
+                    elif 125 < x1 < 225 and drawColor == (255, 0, 255):
+                        header = overlayList[0]
+                        shape = 'freestyle'
+                    elif 275 < x1 < 375 and drawColor == (255, 0, 255):
+                        header = overlayList[6]
+                        shape = 'circle'
+                    elif 400 < x1 < 475 and drawColor == (255, 0, 255):
+                        header = overlayList[7]
+                        shape = 'rectangle'
+                    elif 525 < x1 < 600 and drawColor == (255, 0, 255):
+                        header = overlayList[8]
+                        shape = 'elipse'
+                    elif 125 < x1 < 225 and drawColor == (255, 0, 0):
+                        header = overlayList[10]
+                        shape = 'freestyle'
+                    elif 275 < x1 < 375 and drawColor == (255, 0, 0):
+                        header = overlayList[11]
+                        shape = 'circle'
+                    elif 400 < x1 < 475 and drawColor == (255, 0, 0):
+                        header = overlayList[12]
+                        shape = 'rectangle'
+                    elif 525 < x1 < 600 and drawColor == (255, 0, 0):
+                        header = overlayList[13]
+                        shape = 'elipse'
+                    if 125 < x1 < 225 and drawColor == (0, 255, 0):
+                        header = overlayList[1]
+                        shape = 'freestyle'
+                    elif 225 < x1 < 375 and drawColor == (0, 255, 0):
+                        header = overlayList[2]
+                        shape = 'circle'
+                    elif 400 < x1 < 475 and drawColor == (0, 255, 0):
+                        header = overlayList[3]
+                        shape = 'rectangle'
+                    elif 525 < x1 < 600 and drawColor == (0, 255, 0):
+                        header = overlayList[4]
+                        shape = 'elipse'
+                cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), drawColor, cv2.FILLED)
+            if fingers[1] and fingers[2] == False:
+                cv2.circle(img, (x1, y1), 15, drawColor)
+                # print("Drawing Mode")
+                if xp == 0 and yp == 0:
+                    xp, yp = x1, y1
+
+                cv2.line(img, (xp, yp), (x1, y1), drawColor, brushThickness)
+
+                if drawColor == (0, 0, 0):
+                    eraserThickness = 50
+                    z1, z2 = lmList[4][1:]
+                    # print(z1,z2)
+                    result = int(((((z1 - x1) ** 2) + ((z2 - y1) ** 2)) ** 0.5))
+                    # print(result)
+                    if result < 0:
+                        result = -1 * result
+                    u = result
+                    if fingers[1] and fingers[4]:
+                        eraserThickness = u
+                    if fingers[1] and fingers[4] and fingers[3]:
+                        imgCanvas=np.zeros((480, 640, 3), np.uint8)
+                        
+                    # print(eraserThickness)
+                    #cv2.putText(img, str("eraserThickness="), (0, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                    #cv2.putText(img, str(int(eraserThickness)), (450, 700), cv2.FONT_HERSHEY_PLAIN, 3,(255, 0, 255), 3)
+                    cv2.line(img, (xp, yp), (x1, y1), drawColor, eraserThickness)
+                    cv2.line(imgCanvas, (xp, yp), (x1, y1), drawColor, eraserThickness)
+
+                else:
+                    # brushThickness = 5
+                    # z1, z2 = lmList[4][1:]
+                    # print(z1,z2)
+                    # result = int(((((z1 - x1) ** 2) + ((z2 - y1) ** 2)) ** 0.5))
+                    # print(result)
+                    # if result < 0:
+                    #     result = -1 * result
+                    # u = result
+                    # brushThickness = int(u)
+                    # print(eraserThickness)
+
+                    # draw
+                    if shape == 'freestyle':
+
+                        cv2.line(imgCanvas, (xp, yp), (x1, y1), drawColor, brushThickness)
+                        cv2.line(img, (xp, yp), (x1, y1), drawColor, brushThickness)
+                        #cv2.putText(img, str(u), (600, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        #cv2.putText(img, str("brushThickness="), (0, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        #cv2.putText(img, str(int(brushThickness)), (450, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255),3)
+
+                    # Rectangle
+                    # print(int(cTime-pTime))
+                    if shape == 'rectangle' and (cTime-pTime).total_seconds()>1:
+                        # pTime=cTime
+                        # cTime=time.time()
+                        z1, z2 = lmList[4][1:]
+                        # print(z1,z2)
+                        result = int(((((z1 - x1) ** 2) + ((z2 - y1) ** 2)) ** 0.5))
+                        # print(result)
+                        if result < 0:
+                            result = -1 * result
+                        u = result
+                        cv2.rectangle(img, (x0, y0), (x1, y1), drawColor)
+                        # cv2.putText(img, "Length of Diagonal = ", (0, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        # cv2.putText(img, str(u), (530, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        if fingers[4]:
+                            if drawFilled:
+                                cv2.rectangle(imgCanvas,(x0,y0),(x1,y1),drawColor,thickness=-1)
+                            else:
+                                cv2.rectangle(imgCanvas, (x0, y0), (x1, y1), drawColor,thickness=brushThickness)
+                            pTime=cTime
+                            # cv2.circle
+
+                    # Circle
+                    if shape == 'circle' and (cTime-pTime).total_seconds()>1:
+                        z1, z2 = lmList[4][1:]
+                        # print(z1,z2)
+                        result = int(((((z1 - x1) ** 2) + ((z2 - y1) ** 2)) ** 0.5))
+                        # print(result)
+                        if result < 0:
+                            result = -1 * result
+                        u = result
+                        # cv2.putText(img, "Radius Of Circe = ", (0, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        # cv2.putText(img, str(u), (450, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        cv2.circle(img, (x0, y0), u, drawColor)
+                        if fingers[4]:
+                            pTime=cTime
+                            if drawFilled:
+                                cv2.circle(imgCanvas, (x0, y0), u, drawColor,thickness=-1)
+                            else:
+                                cv2.circle(imgCanvas, (x0, y0), u, drawColor,thickness=brushThickness)
+
+                    # Ellipse
+                    if shape == 'elipse' and (cTime-pTime).total_seconds()>1:
+                        z1, z2 = lmList[4][1:]
+                        # cv2.ellipse(img,(x1,y1),(int(z1/2),int(z2/2)),0,0,360,255,0)
+                        a = z1 - x1
+                        b = (z2 - x2)
+                        if x1 > 250:
+                            b = int(b / 2)
+                        if a < 0:
+                            a = -1 * a
+                        if b < 0:
+                            b = -1 * b
+                        cv2.ellipse(img, (x1, y1), (a, b), 0, 0, 360, drawColor, 1)
+                        # cv2.putText(img, "Major AL, Minor AL = ", (0, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        # cv2.putText(img, str(a), (550, 700), cv2.FONT_HERSHEY_PLAIN, 3, (123, 20, 255), 3)
+                        # cv2.putText(img, str(b), (700, 700), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
+                        if fingers[4]:
+                            pTime=cTime
+                            if drawFilled:
+                                cv2.ellipse(imgCanvas, (x1, y1), (a, b),0, 0,  360,  drawColor,thickness=-1)
+                            else:
+                                cv2.ellipse(imgCanvas, (x1, y1), (a, b),0, 0, 360, drawColor,thickness=brushThickness)
+
+                xp, yp = x1, y1
+
+            # Clear Canvas when 2 fingers are up
+            if fingers[2] and fingers[3] and fingers[0] == 0 and fingers[1] == 0 and fingers[4] == 0:
+                imgCanvas = np.zeros((720, 1280, 3), np.uint8)
+
+        imgGray = cv2.cvtColor(imgCanvas, cv2.COLOR_BGR2GRAY)
+        _, imgInv = cv2.threshold(imgGray, 50, 255, cv2.THRESH_BINARY_INV)
+        imgInv = cv2.cvtColor(imgInv, cv2.COLOR_GRAY2BGR)
+        img = cv2.bitwise_and(img, imgInv)
+        img = cv2.bitwise_or(img, imgCanvas)
+        # pTime=cTime
+        # Setting the header image
+        img[0:83, 0:640] = header
+        img[83:480,0:40]=header2
+        # img = cv2.addWeighted(img,0.5,imgCanvas,0.5,0)
+
+        cv2.imshow("Image", img)
+        
+        # cv2.imshow("Canvas", imgCanvas)
+        # cv2.imshow("Inv", imgInv)
+        cv2.waitKey(1)
+
+
+virtual_Painter()
