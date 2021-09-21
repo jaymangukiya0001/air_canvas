@@ -39,29 +39,46 @@ def virtual_Painter():
     eraserThickness = 150
     brushThickness=int(v1.get())
     print(brushThickness)
-    folderPath = "Header"
-    folderPath2="Header2"
+    folderPath = "Header2"
+    folderPath2="Header1"
+    folderPath3="Header3"
+    folderPath4="Header4"
+
     myList = os.listdir(folderPath)
     # print(myList)
     overlayList = []
+    overlayList3 = []
+    overlayList4=[]
     filled=[]
     drawFilled=False
     for imPath in myList:
         image = cv2.imread(f'{folderPath}/{imPath}')
-        image=cv2.resize(image,(640,83),interpolation=cv2.INTER_AREA)
+        image=cv2.resize(image,(540,83),interpolation=cv2.INTER_AREA)
         overlayList.append(image)
     myList2=os.listdir(folderPath2)
     overlayList2=[]
     for imPath in myList2:
         image = cv2.imread(f'{folderPath2}/{imPath}')
-        image=cv2.resize(image,(40,397),interpolation=cv2.INTER_AREA)
+        image=cv2.resize(image,(50,480),interpolation=cv2.INTER_AREA)
         overlayList2.append(image)
-    
+    myList3=os.listdir(folderPath3)
+    for imPath in myList3:
+        image = cv2.imread(f'{folderPath3}/{imPath}')
+        image=cv2.resize(image,(50,480),interpolation=cv2.INTER_AREA)
+        overlayList3.append(image)
+
+    myList4=os.listdir(folderPath4)
+    for imPath in myList4:
+        image = cv2.imread(f'{folderPath4}/{imPath}')
+        image=cv2.resize(image,(50,480),interpolation=cv2.INTER_AREA)
+        overlayList4.append(image)
     # print(len(overlayList))
     # print(overlayList)
     
     header = overlayList[0]
     header2=overlayList2[0]
+    header3=overlayList3[0]
+    header4=overlayList4[0]
     drawColor = (255, 0, 255)
     shape = 'freestyle'
     cap = cv2.VideoCapture(0)
@@ -74,7 +91,7 @@ def virtual_Painter():
 
     i=0
 
-
+    right_header_change=False
     # for a time management
     cTime=0
     pTime=datetime.now()
@@ -105,32 +122,55 @@ def virtual_Painter():
                 xp, yp = 0, 0
                 # print("Selection Mode")
                 # # Checking for the click
-                if y1 < 83:
-                    if 125 < x1 < 225:
-                        header = overlayList[0]
-                        drawColor = (255, 0, 255)
-                    elif 275 < x1 < 275:
-                        header = overlayList[1]
-                        drawColor = (255, 0, 0)
-                    elif 400 < x1 < 475:
-                        header = overlayList[10]
-                        drawColor = (0, 255, 0)
-                    elif 525 < x1 < 640:
-                        header = overlayList[5]
-                        drawColor = (0, 0, 0)
-                if x1<40:
+                if x1 > 590:
+                    if y1<83:
+                        header3,header4=header4,header3
+                        if right_header_change==False:
+                            right_header_change=True
+                        else:
+                            right_header_change=False
+                    elif 83 < y1 < 170:
+                        if right_header_change==False:
+                            header3 = overlayList3[0]
+                            drawColor = (255, 0, 255)
+                        else:
+                            header3=overlayList4[0]
+                            drawColor=(10,0,10)
+                    elif 170 < y1 < 270:
+                        if right_header_change==False:
+                            header3 = overlayList3[1]
+                            drawColor = (0, 255, 0)
+                        else:
+                            header3=overlayList4[1]
+                            drawColor=(0,0,255)
+                    elif 270 < y1 < 370:
+                        if right_header_change==False:
+                            header3 = overlayList3[2]
+                            drawColor = (255, 0, 0)
+                        else:
+                            header3=overlayList4[2]
+                            drawColor=(250,206,136)
+                    # elif 370 < y1 < 480:
+                    #     print("more")
+                    #     # overlayList3,overlayList4=overlayList4,overlayList3
+                    #     header3,header4=header4,header3
+                    #     #saving logic
+                if y1<83:
                     # cv2.putText(img,str(x1)+","+str(y1),(x1,y1),cv2.FONT_HERSHEY_COMPLEX,3,(244,123,245))
                     
-                    if y1>220:
+                    if 295<x1<375:
                         if (cTime-pTime).total_seconds()>0.75:
                             if drawFilled:
-                                header2=overlayList2[1]
-                                drawFilled=False
-                            else:
-                                header2=overlayList2[0]
+                                header=overlayList[1]
                                 drawFilled=True
+                            else:
+                                header=overlayList[0]
+                                drawFilled=False
                             pTime=cTime
-                    else:
+                    elif 150<x1<220:
+                        drawColor=(0,0,0)
+                        header=overlayList[2]
+                    elif 220<x1<295:
                         # print(i)
                         print((cTime-pTime).total_seconds())
                         if (cTime-pTime).total_seconds()>1:
@@ -139,46 +179,23 @@ def virtual_Painter():
                             pTime=cTime
 
                         
-                if y1 > 80 and y1 < 140 :
-                    if x1 < 125:
-                        header = overlayList[9]
-
-                    elif 125 < x1 < 225 and drawColor == (255, 0, 255):
-                        header = overlayList[0]
+                if x1<50:
+                
+                    if y1<96:
+                        header2 = overlayList2[0]
                         shape = 'freestyle'
-                    elif 275 < x1 < 375 and drawColor == (255, 0, 255):
-                        header = overlayList[6]
+                    elif 96 < y1 < 192:
+                        header2 = overlayList2[1]
                         shape = 'circle'
-                    elif 400 < x1 < 475 and drawColor == (255, 0, 255):
-                        header = overlayList[7]
+                    elif 192 < y1 < 288:
+                        header2 = overlayList2[2]
                         shape = 'rectangle'
-                    elif 525 < x1 < 600 and drawColor == (255, 0, 255):
-                        header = overlayList[8]
+                    elif 288 < y1 < 384 :
+                        header2 = overlayList2[3]
                         shape = 'elipse'
-                    elif 125 < x1 < 225 and drawColor == (255, 0, 0):
-                        header = overlayList[10]
-                        shape = 'freestyle'
-                    elif 275 < x1 < 375 and drawColor == (255, 0, 0):
-                        header = overlayList[11]
-                        shape = 'circle'
-                    elif 400 < x1 < 475 and drawColor == (255, 0, 0):
-                        header = overlayList[12]
-                        shape = 'rectangle'
-                    elif 525 < x1 < 600 and drawColor == (255, 0, 0):
-                        header = overlayList[13]
-                        shape = 'elipse'
-                    if 125 < x1 < 225 and drawColor == (0, 255, 0):
-                        header = overlayList[1]
-                        shape = 'freestyle'
-                    elif 225 < x1 < 375 and drawColor == (0, 255, 0):
-                        header = overlayList[2]
-                        shape = 'circle'
-                    elif 400 < x1 < 475 and drawColor == (0, 255, 0):
-                        header = overlayList[3]
-                        shape = 'rectangle'
-                    elif 525 < x1 < 600 and drawColor == (0, 255, 0):
-                        header = overlayList[4]
-                        shape = 'elipse'
+                    elif 384 < y1 < 480:
+                        header2 = overlayList2[4]
+                        shape = 'triangle'
                 cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), drawColor, cv2.FILLED)
             if fingers[1] and fingers[2] == False:
                 cv2.circle(img, (x1, y1), 15, drawColor)
@@ -307,8 +324,9 @@ def virtual_Painter():
         img = cv2.bitwise_or(img, imgCanvas)
         # pTime=cTime
         # Setting the header image
-        img[0:83, 0:640] = header
-        img[83:480,0:40]=header2
+        img[0:83, 50:590] = header
+        img[0:480,0:50]=header2
+        img[0:480,590:640]=header3
         # img = cv2.addWeighted(img,0.5,imgCanvas,0.5,0)
 
         cv2.imshow("Image", img)
