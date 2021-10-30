@@ -1,14 +1,21 @@
+import tkinter as tk
+from flask import Flask, render_template, Response
 import cv2
+import os
 import numpy as np
 import time
-import os
 import HandTrackingModule as htm
-from datetime import datetime
+import datetime
 from tkinter import *
 
+app = Flask(__name__)
 
-def virtual_Painter():
-    # brush thickness logic
+
+def gen_frames():  # generate frame by frame from camera
+    cap = cv2.VideoCapture(0)
+    cap.set(3, 640)
+    cap.set(4, 480)
+
     root = Tk()
     root.geometry("400x300")
     v1 = DoubleVar()
@@ -87,9 +94,6 @@ def virtual_Painter():
     header4 = overlayList4[0]
     drawColor = (255, 0, 255)
     shape = 'freestyle'
-    cap = cv2.VideoCapture(0)
-    cap.set(3, 640)
-    cap.set(4, 480)
 
     detector = htm.handDetector(detectionCon=0.85, maxHands=1)
     xp, yp = 0, 0
@@ -100,8 +104,12 @@ def virtual_Painter():
     right_header_change = False
     # for a time management
     cTime = 0
-    pTime = datetime.now()
-    watermark = cv2.imread("watermark/w5.png")
+    pTime = datetime.datetime.now()
+    watermark = cv2.imread("watermark/w6.png")
+    watermark = cv2.resize(watermark, (360, 862),
+                           interpolation=cv2.INTER_AREA)
+    watermark = cv2.flip(watermark, 1)
+
     wm_scale = 40
     wm_width = int(watermark.shape[1] * wm_scale/100)
     wm_height = int(watermark.shape[0] * wm_scale/100)
@@ -109,11 +117,12 @@ def virtual_Painter():
     resized_wm = cv2.resize(watermark, wm_dim)
     # cv2.imshow("resized",resized_wm)
     overlay = np.zeros((480, 640, 3), dtype="uint8")
+
     if int(operation_value) == 2:
 
         while True:
 
-            cTime = datetime.now()
+            cTime = datetime.datetime.now()
             # 1. Import image
             success, img = cap.read()
             img = cv2.flip(img, 1)
@@ -393,15 +402,21 @@ def virtual_Painter():
             img[0:480, 590:640] = header3
             # img = cv2.addWeighted(img,0.5,imgCanvas,0.5,0)
 
-            cv2.imshow("Image", img)
+            ret, buffer = cv2.imencode('.jpg', img)
+
+            img = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n')  # concat frame one by one and show result
+
+            # cv2.imshow("Image", img)
 
             # cv2.imshow("Canvas", imgCanvas)
             # cv2.imshow("Inv", imgInv)
             cv2.waitKey(1)
     else:
         while True:
-
-            cTime = datetime.now()
+            cTime = datetime.datetime.now()
             # 1. Import image
             success, img = cap.read()
             resized_img = cv2.resize(
@@ -695,13 +710,34 @@ def virtual_Painter():
             img[0:83, 50:590] = header
             img[0:480, 0:50] = header2
             img[0:480, 590:640] = header3
+
+            ret, buffer = cv2.imencode('.jpg', img)
+
+            img = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n')  # concat frame one by one and show result
+
             # img = cv2.addWeighted(img,0.5,imgCanvas,0.5,0)
 
-            cv2.imshow("Image", img)
+            # cv2.imshow("Image", img)
 
             # cv2.imshow("Canvas", imgCanvas)
             # cv2.imshow("Inv", imgInv)
             cv2.waitKey(1)
 
 
-virtual_Painter()
+@app.route('/video_feed')
+def video_feed():
+    # Video streaming route. Put this in the src attribute of an img tag
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/')
+def index():
+    """Video streaming home page."""
+    return render_template('index.html')
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
